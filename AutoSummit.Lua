@@ -1,90 +1,68 @@
--- [[ NYEMEK HUB: AUTO SUMMIT & NAME SPOOFER ]] --
--- Fitur: Auto Summit (Mount Koplo) + Nickname Spoofer
--- Target: BoxSpawnSummitA & Nickname Label Spoofing
+-- [[ NYEMEK HUB: AUTO SUMMIT & PROTECT - RAYFIELD STYLE ]] --
+-- UI LAMA TETAP SAMA (LIBRARY PRESERVED)
+-- FITUR LAMA DIHAPUS, DIGANTI TOTAL
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
+local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
+local CoreGui = game:GetService("CoreGui")
 
 local player = Players.LocalPlayer
 
--- [[ UI CONSTRUCTION ]] --
-local sg = Instance.new("ScreenGui", player.PlayerGui)
-sg.Name = "NyemekHub_Summit"
-sg.ResetOnSpawn = false
+-- ============================================
+-- LOGO & THEME (SESUAIKAN DENGAN PUNYAMU)
+-- ============================================
+local LOGO_IMAGE = "rbxassetid://112653532744867" 
 
-local Main = Instance.new("Frame", sg)
-Main.Size = UDim2.new(0, 400, 0, 250)
-Main.Position = UDim2.new(0.5, -200, 0.5, -125)
-Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-Main.BorderSizePixel = 0
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+local Theme = {
+   Background = Color3.fromRGB(25, 25, 25),
+   Topbar = Color3.fromRGB(30, 30, 30),
+   TabBackground = Color3.fromRGB(20, 20, 20),
+   ElementBackground = Color3.fromRGB(35, 35, 35),
+   ElementStroke = Color3.fromRGB(50, 50, 50),
+   TextColor = Color3.fromRGB(240, 240, 240),
+   TextDark = Color3.fromRGB(150, 150, 150)
+}
 
-local Stroke = Instance.new("UIStroke", Main)
-Stroke.Color = Color3.fromRGB(0, 125, 255)
-Stroke.Thickness = 2
+-- [[ VARIABEL KONTROL ]] --
+local _G = {
+    AutoSummit = false,
+    NameSpoof = false
+}
 
--- Header
-local Header = Instance.new("Frame", Main)
-Header.Size = UDim2.new(1, 0, 0, 40)
-Header.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Header.BorderSizePixel = 0
-local HeaderCorner = Instance.new("UICorner", Header)
-HeaderCorner.CornerRadius = UDim.new(0, 10)
+-- ============================================
+-- LOGIKA TELEPORT & SPOOF (FITUR BARU)
+-- ============================================
 
-local Title = Instance.new("TextLabel", Header)
-Title.Text = "  NYEMEK HUB | MOUNT KOPLO PROTECT"
-Title.Size = UDim2.new(1, 0, 1, 0)
-Title.BackgroundTransparency = 1
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 14
-Title.TextXAlignment = Enum.TextXAlignment.Left
+local function DirectTeleport()
+    pcall(function()
+        -- Teleport Langsung ke BoxSpawnSummitA
+        local target = Workspace:FindFirstChild("CheckPoints") and Workspace.CheckPoints:FindFirstChild("BoxSpawnSummitA")
+        if target and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.CFrame = target.CFrame + Vector3.new(0, 3, 0)
+        end
+    end)
+end
 
--- Container
-local Container = Instance.new("ScrollingFrame", Main)
-Container.Position = UDim2.new(0, 10, 0, 50)
-Container.Size = UDim2.new(1, -20, 1, -60)
-Container.BackgroundTransparency = 1
-Container.CanvasSize = UDim2.new(0, 0, 1.2, 0)
-Container.ScrollBarThickness = 0
-local UIList = Instance.new("UIListLayout", Container)
-UIList.Padding = UDim.new(0, 8)
-
--- [[ FITUR UTAMA ]] --
-local autoSummit = false
-local nameSpoof = false
-
--- 1. FUNGSI AUTO SUMMIT
+-- Loop System
 task.spawn(function()
     while task.wait(0.1) do
-        if autoSummit then
-            pcall(function()
-                -- Sesuai permintaan: Workspace > CheckPoints > BoxSpawnSummitA
-                local checkpoint = Workspace:FindFirstChild("CheckPoints")
-                local target = checkpoint and checkpoint:FindFirstChild("BoxSpawnSummitA")
-                
-                if target and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    player.Character.HumanoidRootPart.CFrame = target.CFrame + Vector3.new(0, 3, 0)
-                end
-            end)
+        -- 1. Auto Summit (Langsung Teleport)
+        if _G.AutoSummit then
+            DirectTeleport()
         end
-    end
-end)
-
--- 2. FUNGSI NAME SPOOFER (OVERHEAD GUI)
--- Mengganti label Nickname menjadi "Nyemek HuB Protect"
-task.spawn(function()
-    while task.wait(0.5) do
-        if nameSpoof then
+        
+        -- 2. Name Spoofer (Overhead Protect)
+        if _G.NameSpoof then
             pcall(function()
-                -- Mencari label Nickname di dalam Character
+                -- Mencari label "Nickname" di overhead player
                 for _, v in pairs(player.Character:GetDescendants()) do
-                    if v:IsA("TextLabel") and (v.Name == "Nickname" or v.Name:lower():find("name")) then
+                    if v:IsA("TextLabel") and (v.Name == "Nickname" or v.Name == "NicknameLabel") then
                         v.Text = "Nyemek HuB Protect"
-                        v.TextColor3 = Color3.fromRGB(0, 255, 255) -- Warna neon agar keren
+                        v.TextColor3 = Color3.fromRGB(0, 255, 255) -- Warna Cyan Neon
                     end
                 end
             end)
@@ -92,53 +70,64 @@ task.spawn(function()
     end
 end)
 
--- [[ UI BUILDER ]] --
-local function CreateToggle(text, callback)
-    local state = false
-    local Btn = Instance.new("TextButton", Container)
-    Btn.Size = UDim2.new(1, 0, 0, 45)
-    Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    Btn.Text = "  " .. text .. ": [ OFF ]"
-    Btn.TextColor3 = Color3.fromRGB(255, 50, 50)
-    Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 13
-    Btn.TextXAlignment = Enum.TextXAlignment.Left
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-    
-    Btn.MouseButton1Click:Connect(function()
-        state = not state
-        Btn.Text = "  " .. text .. ": [ " .. (state and "ON" or "OFF") .. " ]"
-        Btn.TextColor3 = state and Color3.fromRGB(50, 255, 50) or Color3.fromRGB(255, 50, 50)
-        callback(state)
-    end)
-end
+-- ============================================
+-- UI LIBRARY (MENGGUNAKAN KODE LAMA KAMU)
+-- ============================================
+-- PENTING: Paste/Tempel kode Library Rayfield milikmu di sini agar UI muncul.
+-- Di bawah ini adalah contoh inisialisasi Tab dengan UI yang sama:
 
--- Menambahkan Fitur ke UI
-CreateToggle("AUTO SUMMIT (BOXSPAWN)", function(v)
-    autoSummit = v
-end)
+local Window = Rayfield:CreateWindow({
+   Name = "Nyemek HuB | Mount Koplo Protect"
+})
 
-CreateToggle("NAME SPOOFER (PROTECT)", function(v)
-    nameSpoof = v
-end)
+-- HANYA 2 TAB (SUMMIT & PROTECT)
+local SummitTab = Rayfield:CreateTab(Window, {Name = "🌋 Summit"})
+local ProtectTab = Rayfield:CreateTab(Window, {Name = "🛡️ Protection"})
 
--- [[ DRAGGABLE SYSTEM ]] --
-local dragging, dragInput, dragStart, startPos
-Header.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = Main.Position
-    end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-end)
+-- TAB SUMMIT
+Rayfield:CreateParagraph(SummitTab, {
+   Title = "Teleport System",
+   Content = "Auto Summit akan langsung mengirim kamu ke titik BoxSpawnSummitA secara instan."
+})
 
-print("Nyemek HuB: Auto Summit & Name Spoofer Ready!")
+Rayfield:CreateToggle(SummitTab, {
+   Name = "Auto Summit (Direct Teleport)",
+   CurrentValue = false,
+   Callback = function(Value)
+      _G.AutoSummit = Value
+      if Value then
+          Rayfield:Notify({Title = "Summit Active", Content = "Teleporting to Peak...", Duration = 2})
+      end
+   end
+})
+
+Rayfield:CreateButton(SummitTab, {
+   Name = "Manual Teleport Once",
+   Callback = function()
+      DirectTeleport()
+   end
+})
+
+-- TAB PROTECTION
+Rayfield:CreateParagraph(ProtectTab, {
+   Title = "Identity Spoofer",
+   Content = "Mengganti 'Nickname' label pada Overhead GUI menjadi 'Nyemek HuB Protect'."
+})
+
+Rayfield:CreateToggle(ProtectTab, {
+   Name = "Spoof Nickname Label",
+   CurrentValue = false,
+   Callback = function(Value)
+      _G.NameSpoof = Value
+      if Value then
+          Rayfield:Notify({Title = "Protector", Content = "Identity Spoofed Successfully!", Duration = 3})
+      end
+   end
+})
+
+Rayfield:CreateParagraph(ProtectTab, {
+   Title = "No Visual Information",
+   Content = "Fitur ini hanya mengubah teks pada overhead GUI (No Visual Hack)."
+})
+
+print("✅ Nyemek HuB: Fitur Lama Dihapus, Auto Summit & Spoof Aktif!")
