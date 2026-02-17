@@ -1,8 +1,9 @@
--- [[ NYEMEK HUB: MOUNT KOPLO PROTECT - FIXED TELEPORT ]] --
--- Fitur Lama Dihapus | UI Rayfield Style Preserved
+-- [[ NYEMEK HUB: AUTO SUMMIT & NAME PROTECT - FULL EXECUTE ]] --
+-- Fitur FPS Lama Dihapus | UI Rayfield Style | Auto Teleport Fix
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local CoreGui = game:GetService("CoreGui")
@@ -10,48 +11,32 @@ local CoreGui = game:GetService("CoreGui")
 local player = Players.LocalPlayer
 
 -- ============================================
--- UI LIBRARY (RAYFIELD STYLE)
+-- 1. LOGIKA UTAMA (TELEPORT & SPOOF)
 -- ============================================
--- Gunakan Logo rbxassetid://112653532744867 (Sesuaikan)
-local LOGO_IMAGE = "rbxassetid://112653532744867"
-
 local _G = {
     AutoSummit = false,
     NameSpoof = false
 }
 
--- ============================================
--- FIXED TELEPORT & SPOOF LOGIC
--- ============================================
-
 local function DirectTeleport()
     pcall(function()
-        -- FIX PATH: Berdasarkan gambar Dex, pathnya adalah Workspace.Checkpoints.BoxSpawnSummitA
+        -- FIX PATH: Workspace > Checkpoints > BoxSpawnSummitA (Berdasarkan Gambar Dex)
         local target = Workspace:FindFirstChild("Checkpoints") and Workspace.Checkpoints:FindFirstChild("BoxSpawnSummitA")
-        
         if target and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            -- Teleport instan menggunakan CFrame
             player.Character.HumanoidRootPart.CFrame = target.CFrame + Vector3.new(0, 3, 0)
         end
     end)
 end
 
--- Fast Loop System (0.1s)
 task.spawn(function()
     while task.wait(0.1) do
-        -- 1. Auto Summit (Langsung Teleport Tanpa Delay)
-        if _G.AutoSummit then
-            DirectTeleport()
-        end
-        
-        -- 2. Name Spoofer (Nickname Label Spoofing)
+        if _G.AutoSummit then DirectTeleport() end
         if _G.NameSpoof then
             pcall(function()
-                -- Mencari label "Nickname" di overhead GUI karakter anda
                 for _, v in pairs(player.Character:GetDescendants()) do
                     if v:IsA("TextLabel") and (v.Name == "Nickname" or v.Name == "NicknameLabel") then
                         v.Text = "Nyemek HuB Protect"
-                        v.TextColor3 = Color3.fromRGB(0, 255, 255) -- Cyan Neon
+                        v.TextColor3 = Color3.fromRGB(0, 255, 255)
                     end
                 end
             end)
@@ -60,55 +45,53 @@ task.spawn(function()
 end)
 
 -- ============================================
--- UI INITIALIZATION (RAYFIELD INTERFACE)
+-- 2. LOAD RAYFIELD LIBRARY (MINIFIED)
 -- ============================================
--- PENTING: Gunakan fungsi Rayfield Library anda di sini
--- Saya buatkan inisialisasi tab sesuai UI lama anda:
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
+-- ============================================
+-- 3. INTERFACE BUILDER
+-- ============================================
 local Window = Rayfield:CreateWindow({
-    Name = "NYEMEK HUB | MOUNT KOPLO PROTECT",
-    LoadingTitle = "Nyemek HuB Engine",
-    LoadingSubtitle = "by Love",
-    ConfigurationSaving = { Enabled = false }
+   Name = "Nyemek HuB | Mount Koplo Protect",
+   LoadingTitle = "Nyemek HuB Engine",
+   LoadingSubtitle = "by Love",
+   ConfigurationSaving = { Enabled = false },
+   KeySystem = false -- Ganti true jika ingin pakai key
 })
 
-local MainTab = Window:CreateTab("🌋 Summit", 4483362458) -- Icon ID
+local MainTab = Window:CreateTab("🌋 Summit", 4483362458)
 local ProtectTab = Window:CreateTab("🛡️ Protection", 4483345998)
 
--- TAB SUMMIT (AUTO TELEPORT)
+-- TAB SUMMIT
 MainTab:CreateToggle({
-    Name = "AUTO SUMMIT (BOXSPAWN)",
-    CurrentValue = false,
-    Flag = "ToggleSummit",
-    Callback = function(Value)
-        _G.AutoSummit = Value
-        if Value then
-            DirectTeleport() -- Langsung teleport sekali saat ON
-            Rayfield:Notify({Title = "Status", Content = "Auto Summit: [ ON ]", Duration = 2})
-        end
-    end,
+   Name = "AUTO SUMMIT (BOXSPAWN)",
+   CurrentValue = false,
+   Flag = "SummitToggle",
+   Callback = function(Value)
+      _G.AutoSummit = Value
+      if Value then DirectTeleport() end
+   end,
 })
 
 MainTab:CreateButton({
-    Name = "FORCE TELEPORT ONCE",
-    Callback = function()
-        DirectTeleport()
-    end,
+   Name = "FORCE TELEPORT ONCE",
+   Callback = function() DirectTeleport() end,
 })
 
--- TAB PROTECTION (NAME SPOOF)
+-- TAB PROTECTION
 ProtectTab:CreateToggle({
-    Name = "NAME SPOOFER (PROTECT)",
-    CurrentValue = false,
-    Flag = "ToggleSpoof",
-    Callback = function(Value)
-        _G.NameSpoof = Value
-        if Value then
-            Rayfield:Notify({Title = "Status", Content = "Name Spoofed to Nyemek HuB Protect", Duration = 2})
-        end
-    end,
+   Name = "NAME SPOOFER (PROTECT)",
+   CurrentValue = false,
+   Flag = "SpoofToggle",
+   Callback = function(Value)
+      _G.NameSpoof = Value
+   end,
 })
 
-MainTab:CreateParagraph({Title = "Info", Content = "Script ini otomatis mendeteksi part di Workspace.Checkpoints.BoxSpawnSummitA"})
-
-print("Nyemek HuB Protect Loaded Successfully!")
+Rayfield:Notify({
+   Title = "Nyemek HuB Ready",
+   Content = "Auto Summit & Name Spoof Aktif!",
+   Duration = 5,
+   Image = 4483362458,
+})
