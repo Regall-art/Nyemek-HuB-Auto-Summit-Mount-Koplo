@@ -1,6 +1,6 @@
--- [[ NYEMEK HUB: AUTO SUMMIT & PROTECT ]] --
--- UI 100% SAMA DENGAN SCRIPT LAMA (NO CHANGES TO DESIGN)
--- SYSTEM/FITUR LAMA DIHAPUS TOTAL
+-- [[ NYEMEK HUB: AUTO SUMMIT & NAME PROTECT ]] --
+-- 100% MENGGUNAKAN DESIGN & LIBRARY ASLIMU
+-- HANYA MENGGANTI ISI TAB DAN TOMBOL
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -12,7 +12,7 @@ local CoreGui = game:GetService("CoreGui")
 
 local player = Players.LocalPlayer
 
--- [[ FITUR BARU LOGIC ]] --
+-- [[ LOGIKA FITUR BARU ]] --
 local _G = {
     AutoSummit = false,
     NameSpoof = false
@@ -45,10 +45,9 @@ task.spawn(function()
 end)
 
 -- ============================================
--- UI LIBRARY (INI BAGIAN YANG BIKIN UI BAGUS - TIDAK SAYA UBAH)
+-- CUSTOM LOGO URL (ASLI DARI SCRIPT KAMU)
 -- ============================================
-
-local LOGO_IMAGE = "rbxassetid://112653532744867" 
+local LOGO_IMAGE = "https://imgur.com/a/a4NT73M" 
 
 local Theme = {
    Background = Color3.fromRGB(25, 25, 25),
@@ -124,12 +123,16 @@ function Rayfield:CreateWindow(config)
    MainStroke.Thickness = 1
 
    local Shadow = Instance.new("ImageLabel", Main)
-   Shadow.Size = UDim2.new(1, 47, 1, 47)
-   Shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
    Shadow.AnchorPoint = Vector2.new(0.5, 0.5)
    Shadow.BackgroundTransparency = 1
-   Shadow.Image = "rbxassetid://5554236805"
+   Shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+   Shadow.Size = UDim2.new(1, 47, 1, 47)
    Shadow.ZIndex = 0
+   Shadow.Image = "rbxassetid://5554236805"
+   Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+   Shadow.ImageTransparency = 0.5
+   Shadow.ScaleType = Enum.ScaleType.Slice
+   Shadow.SliceCenter = Rect.new(23, 23, 277, 277)
 
    local Topbar = Instance.new("Frame", Main)
    Topbar.Size = UDim2.new(1, 0, 0, 42)
@@ -142,9 +145,16 @@ function Rayfield:CreateWindow(config)
    Title.BackgroundTransparency = 1
    Title.Text = WindowName
    Title.TextColor3 = Theme.TextColor
-   Title.Font = Enum.Font.GothamBold
    Title.TextSize = 15
+   Title.Font = Enum.Font.GothamBold
    Title.TextXAlignment = Enum.TextXAlignment.Left
+
+   local CloseButton = Instance.new("ImageButton", Topbar)
+   CloseButton.Size = UDim2.new(0, 18, 0, 18)
+   CloseButton.Position = UDim2.new(1, -30, 0.5, -9)
+   CloseButton.BackgroundTransparency = 1
+   CloseButton.Image = "rbxassetid://7733717447"
+   CloseButton.ImageColor3 = Theme.TextColor
 
    local TabContainer = Instance.new("ScrollingFrame", Main)
    TabContainer.Size = UDim2.new(0, 155, 1, -52)
@@ -152,13 +162,13 @@ function Rayfield:CreateWindow(config)
    TabContainer.BackgroundColor3 = Theme.TabBackground
    TabContainer.ScrollBarThickness = 0
    Instance.new("UIListLayout", TabContainer).Padding = UDim.new(0, 3)
+   Instance.new("UIPadding", TabContainer).PaddingTop = UDim.new(0, 5)
 
    local ContentContainer = Instance.new("Frame", Main)
    ContentContainer.Size = UDim2.new(1, -170, 1, -52)
    ContentContainer.Position = UDim2.new(0, 165, 0, 47)
    ContentContainer.BackgroundTransparency = 1
 
-   -- Tombol Logo Mini
    local MiniButton = Instance.new("ImageButton", ScreenGui)
    MiniButton.Size = UDim2.new(0, 60, 0, 60)
    MiniButton.Position = UDim2.new(1, -70, 0.95, -70)
@@ -166,82 +176,188 @@ function Rayfield:CreateWindow(config)
    MiniButton.Image = LOGO_IMAGE
    MiniButton.Visible = false
    Instance.new("UICorner", MiniButton).CornerRadius = UDim.new(0, 12)
-   Instance.new("UIStroke", MiniButton).Thickness = 2
+   local MiniStroke = Instance.new("UIStroke", MiniButton)
+   MiniStroke.Color = Color3.fromRGB(0, 170, 255)
+   MiniStroke.Thickness = 2
+
+   CloseButton.MouseButton1Click:Connect(function()
+      Tween(Main, {Size = UDim2.new(0, 0, 0, 0)}, Animations.Back)
+      task.wait(0.5)
+      Main.Visible = false
+      MiniButton.Visible = true
+      Tween(MiniButton, {Size = UDim2.new(0, 60, 0, 60)}, Animations.Back)
+   end)
+
+   MiniButton.MouseButton1Click:Connect(function()
+      Tween(MiniButton, {Size = UDim2.new(0, 0, 0, 0)}, Animations.Quart)
+      task.wait(0.3)
+      MiniButton.Visible = false
+      Main.Visible = true
+      Tween(Main, {Size = UDim2.new(0, 500, 0, 475)}, Animations.Back)
+   end)
 
    MakeDraggable(Main, Topbar)
    MakeDraggable(MiniButton)
    Tween(Main, {Size = UDim2.new(0, 500, 0, 475)}, Animations.Back)
 
-   return {TabContainer = TabContainer, ContentContainer = ContentContainer, Tabs = {}}
+   return {Main = Main, TabContainer = TabContainer, ContentContainer = ContentContainer, Tabs = {}, CurrentTab = nil}
 end
 
--- [ FUNGSI LAINNYA DIADAPTASI DARI SCRIPT ASLIMU ]
 function Rayfield:CreateTab(Window, config)
+   local TabName = config.Name or "Tab"
    local TabButton = Instance.new("TextButton", Window.TabContainer)
    TabButton.Size = UDim2.new(1, 0, 0, 32)
    TabButton.BackgroundTransparency = 1
    TabButton.Text = ""
+   
    local TabTitle = Instance.new("TextLabel", TabButton)
    TabTitle.Size = UDim2.new(1, -20, 1, 0)
    TabTitle.Position = UDim2.new(0, 10, 0, 0)
-   TabTitle.Text = config.Name
-   TabTitle.TextColor3 = Theme.TextDark
    TabTitle.BackgroundTransparency = 1
+   TabTitle.Text = TabName
+   TabTitle.TextColor3 = Theme.TextDark
+   TabTitle.Font = Enum.Font.GothamMedium
 
    local TabContent = Instance.new("ScrollingFrame", Window.ContentContainer)
    TabContent.Size = UDim2.new(1, -10, 1, -10)
    TabContent.BackgroundTransparency = 1
+   TabContent.ScrollBarThickness = 3
    TabContent.Visible = false
    Instance.new("UIListLayout", TabContent).Padding = UDim.new(0, 8)
 
    TabButton.MouseButton1Click:Connect(function()
-      for _, v in pairs(Window.ContentContainer:GetChildren()) do v.Visible = false end
+      for _, v in pairs(Window.Tabs) do v.Content.Visible = false v.Title.TextColor3 = Theme.TextDark end
       TabContent.Visible = true
+      TabTitle.TextColor3 = Theme.TextColor
+      Window.CurrentTab = TabName
    end)
-   return {Content = TabContent}
+
+   local Tab = {Content = TabContent, Title = TabTitle}
+   Window.Tabs[TabName] = Tab
+   if not Window.CurrentTab then TabContent.Visible = true TabTitle.TextColor3 = Theme.TextColor Window.CurrentTab = TabName end
+   return Tab
 end
 
 function Rayfield:CreateToggle(Tab, config)
-   local Frame = Instance.new("Frame", Tab.Content)
-   Frame.Size = UDim2.new(1, 0, 0, 35)
-   Frame.BackgroundColor3 = Theme.ElementBackground
-   Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 5)
-   Instance.new("UIStroke", Frame).Color = Theme.ElementStroke
+   local ToggleFrame = Instance.new("Frame", Tab.Content)
+   ToggleFrame.Size = UDim2.new(1, 0, 0, 35)
+   ToggleFrame.BackgroundColor3 = Theme.ElementBackground
+   Instance.new("UICorner", ToggleFrame).CornerRadius = UDim.new(0, 5)
+   Instance.new("UIStroke", ToggleFrame).Color = Theme.ElementStroke
 
-   local Title = Instance.new("TextLabel", Frame)
-   Title.Text = "  " .. config.Name
-   Title.TextColor3 = Theme.TextColor
-   Title.Size = UDim2.new(1, 0, 1, 0)
-   Title.BackgroundTransparency = 1
-   Title.TextXAlignment = "Left"
+   local ToggleTitle = Instance.new("TextLabel", ToggleFrame)
+   ToggleTitle.Size = UDim2.new(1, -60, 1, 0)
+   ToggleTitle.Position = UDim2.new(0, 10, 0, 0)
+   ToggleTitle.BackgroundTransparency = 1
+   ToggleTitle.Text = config.Name
+   ToggleTitle.TextColor3 = Theme.TextColor
+   ToggleTitle.TextXAlignment = Enum.TextXAlignment.Left
 
-   local Btn = Instance.new("TextButton", Frame)
-   Btn.Size = UDim2.new(0, 40, 0, 20)
-   Btn.Position = UDim2.new(1, -45, 0.5, -10)
-   Btn.Text = ""
-   Instance.new("UICorner", Btn).CornerRadius = UDim.new(1, 0)
+   local ToggleBtn = Instance.new("TextButton", ToggleFrame)
+   ToggleBtn.Size = UDim2.new(0, 40, 0, 20)
+   ToggleBtn.Position = UDim2.new(1, -45, 0.5, -10)
+   ToggleBtn.BackgroundColor3 = Theme.ToggleBackground
+   ToggleBtn.Text = ""
+   Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
+   local Stroke2 = Instance.new("UIStroke", ToggleBtn)
+   Stroke2.Color = Theme.ToggleDisabledStroke
 
-   local active = false
-   Btn.MouseButton1Click:Connect(function()
-      active = not active
-      Btn.BackgroundColor3 = active and Theme.ToggleEnabled or Theme.ToggleBackground
-      config.Callback(active)
+   local Indicator = Instance.new("Frame", ToggleBtn)
+   Indicator.Size = UDim2.new(0, 16, 0, 16)
+   Indicator.Position = UDim2.new(0, 2, 0.5, -8)
+   Indicator.BackgroundColor3 = Theme.ToggleDisabled
+   Instance.new("UICorner", Indicator).CornerRadius = UDim.new(1, 0)
+
+   local toggled = config.CurrentValue or false
+   local function Update()
+      if toggled then
+         Tween(Indicator, {Position = UDim2.new(1, -18, 0.5, -8), BackgroundColor3 = Theme.ToggleEnabled})
+         Tween(Stroke2, {Color = Theme.ToggleEnabledStroke})
+      else
+         Tween(Indicator, {Position = UDim2.new(0, 2, 0.5, -8), BackgroundColor3 = Theme.ToggleDisabled})
+         Tween(Stroke2, {Color = Theme.ToggleDisabledStroke})
+      end
+   end
+   Update()
+
+   ToggleBtn.MouseButton1Click:Connect(function()
+      toggled = not toggled
+      Update()
+      config.Callback(toggled)
    end)
 end
 
--- [[ INISIALISASI ]] --
-local Win = Rayfield:CreateWindow({Name = "Nyemek HuB | Mount Koplo Protect"})
-local Tab1 = Rayfield:CreateTab(Win, {Name = "🌋 Summit"})
-local Tab2 = Rayfield:CreateTab(Win, {Name = "🛡️ Protection"})
+function Rayfield:CreateButton(Tab, config)
+   local ButtonFrame = Instance.new("Frame", Tab.Content)
+   ButtonFrame.Size = UDim2.new(1, 0, 0, 35)
+   ButtonFrame.BackgroundColor3 = Theme.ElementBackground
+   Instance.new("UICorner", ButtonFrame).CornerRadius = UDim.new(0, 5)
+   Instance.new("UIStroke", ButtonFrame).Color = Theme.ElementStroke
 
-Rayfield:CreateToggle(Tab1, {
-   Name = "AUTO SUMMIT (TELEPORT)",
-   Callback = function(val) _G.AutoSummit = val if val then DirectTeleport() end end
+   local Button = Instance.new("TextButton", ButtonFrame)
+   Button.Size = UDim2.new(1, 0, 1, 0)
+   Button.BackgroundTransparency = 1
+   Button.Text = config.Name
+   Button.TextColor3 = Theme.TextColor
+   Button.Font = Enum.Font.Gotham
+   Button.MouseButton1Click:Connect(config.Callback)
+end
+
+function Rayfield:CreateParagraph(Tab, config)
+   local Frame = Instance.new("Frame", Tab.Content)
+   Frame.Size = UDim2.new(1, 0, 0, 0)
+   Frame.AutomaticSize = Enum.AutomaticSize.Y
+   Frame.BackgroundColor3 = Theme.ElementBackground
+   Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 5)
+   Instance.new("UIStroke", Frame).Color = Theme.ElementStroke
+   
+   local T = Instance.new("TextLabel", Frame)
+   T.Size = UDim2.new(1, -20, 0, 20)
+   T.Position = UDim2.new(0, 10, 0, 5)
+   T.Text = config.Title
+   T.TextColor3 = Theme.TextColor
+   T.Font = Enum.Font.GothamBold
+   T.BackgroundTransparency = 1
+   T.TextXAlignment = "Left"
+
+   local C = Instance.new("TextLabel", Frame)
+   C.Size = UDim2.new(1, -20, 0, 0)
+   C.Position = UDim2.new(0, 10, 0, 25)
+   C.AutomaticSize = Enum.AutomaticSize.Y
+   C.Text = config.Content
+   C.TextColor3 = Theme.TextDark
+   C.BackgroundTransparency = 1
+   C.TextWrapped = true
+   C.TextXAlignment = "Left"
+end
+
+-- ============================================
+-- EKSEKUSI MENU (TAB & BUTTON BARU)
+-- ============================================
+
+local Window = Rayfield:CreateWindow({ Name = "Nyemek HuB | Mount Koplo Protect" })
+
+local MainTab = Rayfield:CreateTab(Window, {Name = "🌋 Summit"})
+local ProtectTab = Rayfield:CreateTab(Window, {Name = "🛡️ Protection"})
+
+Rayfield:CreateParagraph(MainTab, {
+   Title = "Auto Summit System",
+   Content = "Fungsi ini akan membuat anda teleport terus menerus ke puncak (BoxSpawnSummitA)."
 })
 
-Rayfield:CreateToggle(Tab2, {
+Rayfield:CreateToggle(MainTab, {
+   Name = "AUTO SUMMIT (ON/OFF)",
+   Callback = function(v) _G.AutoSummit = v end
+})
+
+Rayfield:CreateButton(MainTab, {
+   Name = "INSTANT TELEPORT ONCE",
+   Callback = function() DirectTeleport() end
+})
+
+Rayfield:CreateToggle(ProtectTab, {
    Name = "NAME SPOOFER PROTECT",
-   Callback = function(val) _G.NameSpoof = val end
+   Callback = function(v) _G.NameSpoof = v end
 })
 
-print("✅ UI KEMBALI NORMAL!")
+print("✅ NYEMEK HUB LOADED WITH ORIGINAL DESIGN!")
