@@ -1,5 +1,5 @@
 -- [[ NYEMEK HUB | MOUNT KOPLO PROTECT ]] --
--- FIXED BASED ON DEX EXPLORER SCREENSHOT
+-- FINAL FIXED VERSION (DEX OPTIMIZED)
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -16,41 +16,41 @@ local Settings = {
     SpoofedName = "Nyemek HuB Protect",
 }
 
--- [[ LOGIC: AUTO SUMMIT ]] --
--- Sesuai screenshot: Workspace > Checkpoints > BoxSpawnSummitA
+-- [[ LOGIC: AUTO SUMMIT FIXED ]] --
 local function DoAutoSummit()
     pcall(function()
-        local checkpoints = Workspace:FindFirstChild("Checkpoints")
-        local target = checkpoints and checkpoints:FindFirstChild("BoxSpawnSummitA")
+        local target = Workspace:FindFirstChild("Checkpoints") and Workspace.Checkpoints:FindFirstChild("BoxSpawnSummitA")
+        local char = player.Character
         
-        if target and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = player.Character.HumanoidRootPart
-            -- Teleport langsung ke posisi part
-            hrp.CFrame = target.CFrame + Vector3.new(0, 3, 0)
+        if target and char and char:FindFirstChild("HumanoidRootPart") then
+            -- Gunakan PivotTo agar seluruh model karakter ikut berpindah tanpa bug physics
+            char:PivotTo(target.CFrame * CFrame.new(0, 3, 0))
             
-            -- Trigger Touched agar server memberikan skor/badge
-            if firetouchinterest then
-                firetouchinterest(hrp, target, 0)
-                task.wait(0.1)
-                firetouchinterest(hrp, target, 1)
-            end
+            -- Re-trigger touch interest untuk memastikan server mencatat summit
+            local hrp = char.HumanoidRootPart
+            firetouchinterest(hrp, target, 0)
+            task.wait(0.1)
+            firetouchinterest(hrp, target, 1)
         end
     end)
 end
 
--- [[ LOGIC: NAME SPOOFER ]] --
--- Sesuai screenshot: Head > PlayerTitleGui > SummitLabel
+-- [[ LOGIC: NAME SPOOFER FIXED (USERNAME PROTECT) ]] --
 local function UpdateNames()
     for _, v in pairs(Players:GetPlayers()) do
         pcall(function()
             if v.Character and v.Character:FindFirstChild("Head") then
                 local titleGui = v.Character.Head:FindFirstChild("PlayerTitleGui")
                 if titleGui then
-                    -- Mengubah "SummitLabel" (teks Synx/Rank) menjadi nama proteksi
-                    local label = titleGui:FindFirstChild("SummitLabel")
-                    if label and label:IsA("TextLabel") then
-                        label.Text = Settings.SpoofedName
-                        label.TextColor3 = Color3.fromRGB(0, 255, 0) -- Hijau sesuai tema UI
+                    -- Mencari semua label (termasuk yang berisi username)
+                    for _, label in pairs(titleGui:GetDescendants()) do
+                        if label:IsA("TextLabel") then
+                            -- Jika teks mengandung nama atau display name player, ganti!
+                            if label.Text:find(v.Name) or label.Text:find(v.DisplayName) or label.Name == "SummitLabel" then
+                                label.Text = Settings.SpoofedName
+                                label.TextColor3 = Color3.fromRGB(0, 255, 0)
+                            end
+                        end
                     end
                 end
             end
@@ -66,7 +66,7 @@ task.spawn(function()
     end
 end)
 
--- [[ UI LIBRARY & DESIGN - ASLI 100% ]] --
+-- [[ UI LIBRARY & DESIGN - TETAP SAMA ]] --
 local Theme = {
     Background = Color3.fromRGB(25, 25, 25),
     Topbar = Color3.fromRGB(30, 30, 30),
@@ -211,7 +211,7 @@ end
 local Window = Rayfield:CreateWindow({Name = "NYEMEK HUB | MOUNT KOPLO PROTECT"})
 local MainTab = Rayfield:CreateTab(Window, {Name = "🏔️ Main"})
 
-Rayfield:CreateParagraph(MainTab, {Title = "INFO", Content = "Auto Summit sesuai posisi Dex Explorer kamu."})
+Rayfield:CreateParagraph(MainTab, {Title = "STATUS", Content = "Auto Summit & Name Spoofer Ready."})
 
 Rayfield:CreateToggle(MainTab, {
     Name = "AUTO SUMMIT (BOXSPAWN)",
@@ -223,4 +223,4 @@ Rayfield:CreateToggle(MainTab, {
     Callback = function(val) Settings.NameSpoofer = val end
 })
 
-print("✅ NYEMEK HUB LOADED!")
+print("✅ NYEMEK HUB FINAL LOADED!")
