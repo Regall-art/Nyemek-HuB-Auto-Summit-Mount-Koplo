@@ -23,7 +23,7 @@ local Settings = {
    AutoSummit = false,
    NameSpoofer = false,
    SpoofedName = "Nyemek HuB Protect",
-   SummitDelay = 0.1,
+   SummitDelay = 0.5,
    TeleportSpeed = 1
 }
 
@@ -604,65 +604,97 @@ function Rayfield:Notify(config)
 end
 
 -- ============================================
--- AUTO SUMMIT FUNCTIONS
+-- AUTO SUMMIT FUNCTIONS (FIXED)
 -- ============================================
 
-local autoSummitConnection
+local autoSummitThread = nil
 
-function FindSummitParts()
-   local summitParts = {}
-   
-   -- Search for BoxSpawn parts in workspace
-   for _, obj in pairs(Workspace:GetDescendants()) do
-      if obj:IsA("BasePart") and obj.Name:lower():find("boxspawn") then
-         table.insert(summitParts, obj)
-      end
-   end
-   
-   -- Alternative: Search by ClassName
-   for _, obj in pairs(Workspace:GetDescendants()) do
-      if obj:IsA("BasePart") and obj.ClassName == "Part" then
-         -- Check if part is a summit checkpoint
-         if obj:FindFirstChild("SummitID") or obj:FindFirstChild("Checkpoint") then
-            table.insert(summitParts, obj)
+-- Fungsi mencari BoxSpawnSummitA di folder Checkpoints
+-- Berdasarkan Explorer di screenshot: Workspace > [number folders] > Checkpoints > BoxSpawnSummitA
+local function FindAllBoxSpawnParts()
+   local found = {}
+
+   -- Cari di seluruh workspace secara rekursif
+   for _, obj in ipairs(Workspace:GetDescendants()) do
+      if obj:IsA("BasePart") then
+         local nameLower = obj.Name:lower()
+         -- Cocokkan nama BoxSpawnSummitA, BoxSpawnSummitB, dst.
+         -- atau nama apapun yang mengandung "boxspawn"
+         if nameLower:find("boxspawn") then
+            table.insert(found, obj)
          end
       end
    end
-   
-   return summitParts
+
+   -- Jika tidak ketemu via nama, coba cari folder Checkpoints
+   if #found == 0 then
+      for _, obj in ipairs(Workspace:GetDescendants()) do
+         if obj:IsA("Folder") and obj.Name == "Checkpoints" then
+            for _, child in ipairs(obj:GetChildren()) do
+               if child:IsA("BasePart") then
+                  table.insert(found, child)
+               end
+            end
+         end
+      end
+   end
+
+   return found
 end
 
-function TeleportToSummit(part)
-   if not part or not humanoidRootPart then return end
-   
-   pcall(function()
-      humanoidRootPart.CFrame = part.CFrame * CFrame.new(0, 3, 0)
-   end)
+-- Teleport karakter ke atas part summit
+local function TeleportToBoxSpawn(part)
+   if not part or not part.Parent then return end
+
+   -- Update referensi character & HRP jika sudah respawn
+   character = player.Character
+   if not character then return end
+   humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+   if not humanoidRootPart then return end
+
+   local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+   -- Teleport langsung ke atas part
+   humanoidRootPart.CFrame = part.CFrame * CFrame.new(0, 5, 0)
 end
 
-function StartAutoSummit()
+local function StartAutoSummit()
    print("🚀 Auto Summit: ON")
-   
-   autoSummitConnection = RunService.Heartbeat:Connect(function()
-      if not Settings.AutoSummit then return end
-      
-      local summitParts = FindSummitParts()
-      
-      for _, part in ipairs(summitParts) do
-         if part and part.Parent then
-            TeleportToSummit(part)
-            task.wait(Settings.SummitDelay)
+
+   -- Hentikan thread lama kalau ada
+   if autoSummitThread then
+      task.cancel(autoSummitThread)
+      autoSummitThread = nil
+   end
+
+   autoSummitThread = task.spawn(function()
+      while Settings.AutoSummit do
+         local parts = FindAllBoxSpawnParts()
+
+         if #parts > 0 then
+            for _, part in ipairs(parts) do
+               if not Settings.AutoSummit then break end
+               TeleportToBoxSpawn(part)
+               task.wait(Settings.SummitDelay)
+            end
+         else
+            -- Belum ketemu, tunggu sebentar lalu coba lagi
+            print("⚠️ BoxSpawn parts not found, retrying...")
+            task.wait(1)
          end
+
+         task.wait(Settings.SummitDelay)
       end
    end)
 end
 
-function StopAutoSummit()
+local function StopAutoSummit()
    print("🛑 Auto Summit: OFF")
-   
-   if autoSummitConnection then
-      autoSummitConnection:Disconnect()
-      autoSummitConnection = nil
+   Settings.AutoSummit = false
+
+   if autoSummitThread then
+      task.cancel(autoSummitThread)
+      autoSummitThread = nil
    end
 end
 
@@ -673,28 +705,23 @@ end
 local originalDisplayName = player.DisplayName
 local nameSpooferActive = false
 
-function SpoofOverheadName()
+local function SpoofOverheadName()
    print("👤 Name Spoofer: ON")
    nameSpooferActive = true
    
-   -- Spoof BillboardGui overhead names
    for _, otherPlayer in pairs(Players:GetPlayers()) do
       task.spawn(function()
-         local character = otherPlayer.Character
-         if not character then return end
+         local char = otherPlayer.Character
+         if not char then return end
          
-         local head = character:FindFirstChild("Head")
+         local head = char:FindFirstChild("Head")
          if not head then return end
          
-         -- Find existing BillboardGui
          for _, gui in pairs(head:GetChildren()) do
             if gui:IsA("BillboardGui") then
-               -- Find TextLabel with player name
                for _, label in pairs(gui:GetDescendants()) do
                   if label:IsA("TextLabel") then
-                     -- Check if it's the name label
                      if label.Text == otherPlayer.DisplayName or label.Text == otherPlayer.Name then
-                        -- Spoof the name
                         label.Text = Settings.SpoofedName
                         label.TextColor3 = Color3.fromRGB(0, 255, 0)
                      end
@@ -705,14 +732,13 @@ function SpoofOverheadName()
       end)
    end
    
-   -- Monitor new players joining
    Players.PlayerAdded:Connect(function(newPlayer)
       if not nameSpooferActive then return end
       
-      newPlayer.CharacterAdded:Connect(function(character)
+      newPlayer.CharacterAdded:Connect(function(char)
          task.wait(1)
          
-         local head = character:FindFirstChild("Head")
+         local head = char:FindFirstChild("Head")
          if not head then return end
          
          for _, gui in pairs(head:GetChildren()) do
@@ -730,7 +756,6 @@ function SpoofOverheadName()
       end)
    end)
    
-   -- Also spoof local player name displays
    for _, gui in pairs(player.PlayerGui:GetDescendants()) do
       if gui:IsA("TextLabel") then
          if gui.Text == player.DisplayName or gui.Text == player.Name then
@@ -741,17 +766,16 @@ function SpoofOverheadName()
    end
 end
 
-function RestoreOriginalNames()
+local function RestoreOriginalNames()
    print("👤 Name Spoofer: OFF")
    nameSpooferActive = false
    
-   -- Restore all player names
    for _, otherPlayer in pairs(Players:GetPlayers()) do
       task.spawn(function()
-         local character = otherPlayer.Character
-         if not character then return end
+         local char = otherPlayer.Character
+         if not char then return end
          
-         local head = character:FindFirstChild("Head")
+         local head = char:FindFirstChild("Head")
          if not head then return end
          
          for _, gui in pairs(head:GetChildren()) do
@@ -769,6 +793,14 @@ function RestoreOriginalNames()
 end
 
 -- ============================================
+-- AUTO UPDATE CHARACTER SAAT RESPAWN
+-- ============================================
+player.CharacterAdded:Connect(function(newChar)
+   character = newChar
+   humanoidRootPart = newChar:WaitForChild("HumanoidRootPart")
+end)
+
+-- ============================================
 -- CREATE UI
 -- ============================================
 
@@ -782,7 +814,7 @@ local SettingsTab = Rayfield:CreateTab(Window, {Name = "⚙️ Settings"})
 -- MAIN TAB
 Rayfield:CreateParagraph(MainTab, {
    Title = "🏔️ Mount Koplo Auto Summit",
-   Content = "Automatically teleport to BoxSpawn summit checkpoints. Enable to start farming!"
+   Content = "Automatically teleport to BoxSpawnSummitA checkpoint. Enable to start farming!"
 })
 
 Rayfield:CreateToggle(MainTab, {
@@ -844,7 +876,7 @@ Rayfield:CreateParagraph(SettingsTab, {
 
 Rayfield:CreateParagraph(SettingsTab, {
    Title = "ℹ️ How It Works",
-   Content = "Auto Summit finds all BoxSpawn parts in workspace and teleports to them automatically. Name Spoofer changes all player overhead names to protect identity."
+   Content = "Auto Summit mencari semua part bernama BoxSpawnSummit (BoxSpawnSummitA, B, C, dll) di dalam folder Checkpoints lalu teleport ke sana secara otomatis. Name Spoofer mengubah nama overhead semua player."
 })
 
 Rayfield:CreateParagraph(SettingsTab, {
@@ -853,6 +885,6 @@ Rayfield:CreateParagraph(SettingsTab, {
 })
 
 print("\n✅ NYEMEK HUB LOADED!")
-print("🏔️ Auto Summit ready!")
+print("🏔️ Auto Summit ready! (Targeting BoxSpawnSummitA / Checkpoints folder)")
 print("👤 Name Spoofer ready!")
 print(string.rep("=", 70) .. "\n")
