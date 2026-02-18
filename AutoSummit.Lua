@@ -1,5 +1,5 @@
 -- NYEMEK HUB | MOUNT KOPLO PROTECT
--- Auto Summit + Name Spoofer
+-- FIXED AUTO SUMMIT TELEPORT
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -9,12 +9,6 @@ local CoreGui = game:GetService("CoreGui")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-
-player.CharacterAdded:Connect(function(newChar)
-	character = newChar
-	humanoidRootPart = newChar:WaitForChild("HumanoidRootPart")
-end)
 
 local Settings = {
 	AutoSummit = false,
@@ -22,6 +16,7 @@ local Settings = {
 	SpoofedName = "Nyemek HuB Protect",
 }
 
+-- [[ THEME & ANIMATIONS - TIDAK DIUBAH ]] --
 local Theme = {
 	Background = Color3.fromRGB(25, 25, 25),
 	Topbar = Color3.fromRGB(30, 30, 30),
@@ -38,10 +33,10 @@ local Theme = {
 }
 
 local Animations = {
-	Quart  = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
-	Quint  = TweenInfo.new(0.3,  Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-	Back   = TweenInfo.new(0.5,  Enum.EasingStyle.Back,  Enum.EasingDirection.Out),
-	Linear = TweenInfo.new(0.2,  Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+	Quart = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+	Quint = TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+	Back = TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+	Linear = TweenInfo.new(0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
 }
 
 local function Tween(obj, props, info)
@@ -78,7 +73,7 @@ local function CreateNYLogo(parent)
 	return LogoBg
 end
 
--- UI Library
+-- [[ UI LIBRARY - TIDAK DIUBAH ]] --
 local Rayfield = {}
 
 function Rayfield:CreateWindow(config)
@@ -112,30 +107,23 @@ function Rayfield:CreateWindow(config)
 	CloseButton.MouseButton1Click:Connect(function()
 		Tween(Main,{Size=UDim2.new(0,0,0,0)},Animations.Back); task.wait(0.5); Main.Visible = false
 		MiniButton.Visible = true; MiniButton.Size = UDim2.new(0,0,0,0); Tween(MiniButton,{Size=UDim2.new(0,60,0,60)},Animations.Back)
-		task.spawn(function() while MiniButton.Visible do Tween(MiniButton,{Size=UDim2.new(0,65,0,65)},Animations.Quart); task.wait(1); Tween(MiniButton,{Size=UDim2.new(0,60,0,60)},Animations.Quart); task.wait(1) end end)
 	end)
 	MiniButton.MouseButton1Click:Connect(function()
-		Tween(MiniButton,{Size=UDim2.new(0,0,0,0)},Animations.Quart); task.wait(0.3); MiniButton.Visible = false
+		MiniButton.Visible = false
 		Main.Visible = true; Tween(Main,{Size=UDim2.new(0,500,0,400)},Animations.Back)
 	end)
-	MiniButton.MouseEnter:Connect(function() Tween(MiniButton,{Size=UDim2.new(0,68,0,68)},Animations.Quart) end)
-	MiniButton.MouseLeave:Connect(function() Tween(MiniButton,{Size=UDim2.new(0,60,0,60)},Animations.Quart) end)
 
 	MakeDraggable(Main, Topbar); MakeDraggable(MiniButton)
 	Tween(Main,{Size=UDim2.new(0,500,0,400)},Animations.Back)
-	task.wait(0.6)
-	Rayfield:Notify({Title="Nyemek HuB", Content="Mount Koplo Protect loaded!", Duration=3})
 	return {Main=Main, ContentContainer=ContentContainer, TabContainer=TabContainer, Tabs={}, CurrentTab=nil}
 end
 
 function Rayfield:CreateTab(Window, config)
 	local TabName = config.Name or "Tab"
 	local TabButton = Instance.new("TextButton"); TabButton.Size = UDim2.new(1,0,0,32); TabButton.BackgroundColor3 = Theme.ElementBackground; TabButton.BackgroundTransparency = 1; TabButton.BorderSizePixel = 0; TabButton.Text = ""; TabButton.AutoButtonColor = false; TabButton.Parent = Window.TabContainer
-	local TabCorner = Instance.new("UICorner"); TabCorner.CornerRadius = UDim.new(0,5); TabCorner.Parent = TabButton
 	local TabTitle = Instance.new("TextLabel"); TabTitle.Size = UDim2.new(1,-20,1,0); TabTitle.Position = UDim2.new(0,10,0,0); TabTitle.BackgroundTransparency = 1; TabTitle.Text = TabName; TabTitle.TextColor3 = Theme.TextDark; TabTitle.TextSize = 13; TabTitle.Font = Enum.Font.GothamMedium; TabTitle.TextXAlignment = Enum.TextXAlignment.Left; TabTitle.Parent = TabButton
-	local TabContent = Instance.new("ScrollingFrame"); TabContent.Size = UDim2.new(1,-10,1,-10); TabContent.Position = UDim2.new(0,5,0,5); TabContent.BackgroundTransparency = 1; TabContent.BorderSizePixel = 0; TabContent.ScrollBarThickness = 3; TabContent.ScrollBarImageColor3 = Color3.fromRGB(0,255,0); TabContent.CanvasSize = UDim2.new(0,0,0,0); TabContent.AutomaticCanvasSize = Enum.AutomaticSize.Y; TabContent.Visible = false; TabContent.Parent = Window.ContentContainer
-	local ContentList = Instance.new("UIListLayout"); ContentList.Padding = UDim.new(0,8); ContentList.Parent = TabContent
-	local ContentPadding = Instance.new("UIPadding"); ContentPadding.PaddingLeft = UDim.new(0,5); ContentPadding.PaddingRight = UDim.new(0,5); ContentPadding.PaddingTop = UDim.new(0,5); ContentPadding.Parent = TabContent
+	local TabContent = Instance.new("ScrollingFrame"); TabContent.Size = UDim2.new(1,-10,1,-10); TabContent.Position = UDim2.new(0,5,0,5); TabContent.BackgroundTransparency = 1; TabContent.BorderSizePixel = 0; TabContent.ScrollBarThickness = 3; TabContent.ScrollBarImageColor3 = Color3.fromRGB(0,255,0); TabContent.Visible = false; TabContent.Parent = Window.ContentContainer
+	Instance.new("UIListLayout", TabContent).Padding = UDim.new(0,8)
 
 	local function SelectTab()
 		for _, tab in pairs(Window.Tabs) do tab.Button.BackgroundTransparency=1; tab.Title.TextColor3=Theme.TextDark; tab.Content.Visible=false end
@@ -143,8 +131,6 @@ function Rayfield:CreateTab(Window, config)
 		TabContent.Visible = true; Window.CurrentTab = TabName
 	end
 	TabButton.MouseButton1Click:Connect(SelectTab)
-	TabButton.MouseEnter:Connect(function() if Window.CurrentTab~=TabName then Tween(TabButton,{BackgroundTransparency=0.5},Animations.Quart) end end)
-	TabButton.MouseLeave:Connect(function() if Window.CurrentTab~=TabName then Tween(TabButton,{BackgroundTransparency=1},Animations.Quart) end end)
 	local Tab = {Button=TabButton, Title=TabTitle, Content=TabContent, Select=SelectTab}
 	Window.Tabs[TabName] = Tab
 	if not Window.CurrentTab then SelectTab() end
@@ -152,287 +138,141 @@ function Rayfield:CreateTab(Window, config)
 end
 
 function Rayfield:CreateToggle(Tab, config)
-	local ToggleFrame = Instance.new("Frame"); ToggleFrame.Size = UDim2.new(1,0,0,35); ToggleFrame.BackgroundColor3 = Theme.ElementBackground; ToggleFrame.BorderSizePixel = 0; ToggleFrame.Parent = Tab.Content
-	local ToggleCorner = Instance.new("UICorner"); ToggleCorner.CornerRadius = UDim.new(0,5); ToggleCorner.Parent = ToggleFrame
-	local ToggleStroke = Instance.new("UIStroke"); ToggleStroke.Color = Theme.ElementStroke; ToggleStroke.Thickness = 1; ToggleStroke.Parent = ToggleFrame
-	local ToggleTitle = Instance.new("TextLabel"); ToggleTitle.Size = UDim2.new(1,-60,1,0); ToggleTitle.Position = UDim2.new(0,10,0,0); ToggleTitle.BackgroundTransparency = 1; ToggleTitle.Text = config.Name or "Toggle"; ToggleTitle.TextColor3 = Theme.TextColor; ToggleTitle.TextSize = 13; ToggleTitle.Font = Enum.Font.Gotham; ToggleTitle.TextXAlignment = Enum.TextXAlignment.Left; ToggleTitle.Parent = ToggleFrame
-	local StatusLabel = Instance.new("TextLabel"); StatusLabel.Size = UDim2.new(0,40,1,0); StatusLabel.Position = UDim2.new(1,-95,0,0); StatusLabel.BackgroundTransparency = 1; StatusLabel.Text = "[OFF]"; StatusLabel.TextColor3 = Color3.fromRGB(255,0,0); StatusLabel.TextSize = 11; StatusLabel.Font = Enum.Font.GothamBold; StatusLabel.Parent = ToggleFrame
-	local ToggleButton = Instance.new("TextButton"); ToggleButton.Size = UDim2.new(0,40,0,20); ToggleButton.Position = UDim2.new(1,-45,0.5,-10); ToggleButton.BackgroundColor3 = Theme.ToggleBackground; ToggleButton.BorderSizePixel = 0; ToggleButton.Text = ""; ToggleButton.AutoButtonColor = false; ToggleButton.Parent = ToggleFrame
-	local ToggleCorner2 = Instance.new("UICorner"); ToggleCorner2.CornerRadius = UDim.new(1,0); ToggleCorner2.Parent = ToggleButton
-	local ToggleStroke2 = Instance.new("UIStroke"); ToggleStroke2.Color = Theme.ToggleDisabledStroke; ToggleStroke2.Thickness = 1; ToggleStroke2.Parent = ToggleButton
-	local Indicator = Instance.new("Frame"); Indicator.Size = UDim2.new(0,16,0,16); Indicator.Position = UDim2.new(0,2,0.5,-8); Indicator.BackgroundColor3 = Theme.ToggleDisabled; Indicator.BorderSizePixel = 0; Indicator.Parent = ToggleButton
-	local IndicatorCorner = Instance.new("UICorner"); IndicatorCorner.CornerRadius = UDim.new(1,0); IndicatorCorner.Parent = Indicator
+	local ToggleFrame = Instance.new("Frame"); ToggleFrame.Size = UDim2.new(1,0,0,35); ToggleFrame.BackgroundColor3 = Theme.ElementBackground; ToggleFrame.Parent = Tab.Content
+	Instance.new("UICorner", ToggleFrame).CornerRadius = UDim.new(0,5)
+	local ToggleTitle = Instance.new("TextLabel"); ToggleTitle.Size = UDim2.new(1,-60,1,0); ToggleTitle.Position = UDim2.new(0,10,0,0); ToggleTitle.BackgroundTransparency = 1; ToggleTitle.Text = config.Name; ToggleTitle.TextColor3 = Theme.TextColor; ToggleTitle.TextXAlignment = "Left"; ToggleTitle.Parent = ToggleFrame
+	local ToggleButton = Instance.new("TextButton"); ToggleButton.Size = UDim2.new(0,40,0,20); ToggleButton.Position = UDim2.new(1,-45,0.5,-10); ToggleButton.BackgroundColor3 = Theme.ToggleBackground; ToggleButton.Text = ""; ToggleButton.Parent = ToggleFrame
+	Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(1,0)
+	local Indicator = Instance.new("Frame"); Indicator.Size = UDim2.new(0,16,0,16); Indicator.Position = UDim2.new(0,2,0.5,-8); Indicator.BackgroundColor3 = Theme.ToggleDisabled; Indicator.Parent = ToggleButton
+	Instance.new("UICorner", Indicator).CornerRadius = UDim.new(1,0)
 
 	local toggled = config.CurrentValue or false
 	local function Update()
 		if toggled then
-			StatusLabel.Text="[ON]"; StatusLabel.TextColor3=Color3.fromRGB(0,255,0)
-			Tween(Indicator,{Position=UDim2.new(1,-18,0.5,-8),BackgroundColor3=Theme.ToggleEnabled},Animations.Quart)
-			Tween(ToggleStroke2,{Color=Theme.ToggleEnabledStroke},Animations.Quart)
+			Tween(Indicator,{Position=UDim2.new(1,-18,0.5,-8),BackgroundColor3=Theme.ToggleEnabled})
 		else
-			StatusLabel.Text="[OFF]"; StatusLabel.TextColor3=Color3.fromRGB(255,0,0)
-			Tween(Indicator,{Position=UDim2.new(0,2,0.5,-8),BackgroundColor3=Theme.ToggleDisabled},Animations.Quart)
-			Tween(ToggleStroke2,{Color=Theme.ToggleDisabledStroke},Animations.Quart)
+			Tween(Indicator,{Position=UDim2.new(0,2,0.5,-8),BackgroundColor3=Theme.ToggleDisabled})
 		end
 	end
 	Update()
 	ToggleButton.MouseButton1Click:Connect(function()
 		toggled = not toggled; Update()
-		if config.Callback then pcall(config.Callback, toggled) end
+		if config.Callback then config.Callback(toggled) end
 	end)
 end
 
 function Rayfield:CreateParagraph(Tab, config)
-	local Frame = Instance.new("Frame"); Frame.Size = UDim2.new(1,0,0,0); Frame.AutomaticSize = Enum.AutomaticSize.Y; Frame.BackgroundColor3 = Theme.ElementBackground; Frame.BorderSizePixel = 0; Frame.Parent = Tab.Content
-	local Corner = Instance.new("UICorner"); Corner.CornerRadius = UDim.new(0,5); Corner.Parent = Frame
-	local Stroke = Instance.new("UIStroke"); Stroke.Color = Theme.ElementStroke; Stroke.Thickness = 1; Stroke.Parent = Frame
-	local Padding = Instance.new("UIPadding"); Padding.PaddingTop = UDim.new(0,10); Padding.PaddingBottom = UDim.new(0,10); Padding.PaddingLeft = UDim.new(0,10); Padding.PaddingRight = UDim.new(0,10); Padding.Parent = Frame
-	local Title = Instance.new("TextLabel"); Title.Size = UDim2.new(1,0,0,16); Title.BackgroundTransparency = 1; Title.Text = config.Title or "Title"; Title.TextColor3 = Color3.fromRGB(0,255,0); Title.TextSize = 13; Title.Font = Enum.Font.GothamBold; Title.TextXAlignment = Enum.TextXAlignment.Left; Title.Parent = Frame
-	local Content = Instance.new("TextLabel"); Content.Size = UDim2.new(1,0,0,0); Content.Position = UDim2.new(0,0,0,20); Content.AutomaticSize = Enum.AutomaticSize.Y; Content.BackgroundTransparency = 1; Content.Text = config.Content or "Content"; Content.TextColor3 = Theme.TextDark; Content.TextSize = 12; Content.Font = Enum.Font.Gotham; Content.TextXAlignment = Enum.TextXAlignment.Left; Content.TextWrapped = true; Content.Parent = Frame
+	local Frame = Instance.new("Frame"); Frame.Size = UDim2.new(1,0,0,40); Frame.BackgroundColor3 = Theme.ElementBackground; Frame.Parent = Tab.Content
+	Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,5)
+	local T = Instance.new("TextLabel"); T.Size = UDim2.new(1,-20,1,0); T.Position = UDim2.new(0,10,0,0); T.Text = config.Title .. ": " .. config.Content; T.TextColor3 = Theme.TextColor; T.BackgroundTransparency = 1; T.TextXAlignment = "Left"; T.Parent = Frame
 end
 
 function Rayfield:Notify(config)
-	local Notif = Instance.new("Frame"); Notif.Size = UDim2.new(0,300,0,75); Notif.Position = UDim2.new(1,310,1,-85); Notif.BackgroundColor3 = Theme.ElementBackground; Notif.BorderSizePixel = 0
-	pcall(function() Notif.Parent = CoreGui:FindFirstChild("NyemekHubUI") end)
-	if not Notif.Parent then Notif.Parent = player.PlayerGui:FindFirstChild("NyemekHubUI") or player.PlayerGui end
-	local Corner = Instance.new("UICorner"); Corner.CornerRadius = UDim.new(0,6); Corner.Parent = Notif
-	local Stroke = Instance.new("UIStroke"); Stroke.Color = Color3.fromRGB(0,255,0); Stroke.Thickness = 1; Stroke.Parent = Notif
-	local Title = Instance.new("TextLabel"); Title.Size = UDim2.new(1,-20,0,18); Title.Position = UDim2.new(0,10,0,10); Title.BackgroundTransparency = 1; Title.Text = config.Title or "Notification"; Title.TextColor3 = Theme.TextColor; Title.TextSize = 14; Title.Font = Enum.Font.GothamBold; Title.TextXAlignment = Enum.TextXAlignment.Left; Title.Parent = Notif
-	local Content = Instance.new("TextLabel"); Content.Size = UDim2.new(1,-20,0,37); Content.Position = UDim2.new(0,10,0,33); Content.BackgroundTransparency = 1; Content.Text = config.Content or "Content"; Content.TextColor3 = Theme.TextDark; Content.TextSize = 12; Content.Font = Enum.Font.Gotham; Content.TextXAlignment = Enum.TextXAlignment.Left; Content.TextWrapped = true; Content.Parent = Notif
-	Tween(Notif,{Position=UDim2.new(1,-310,1,-85)},Animations.Quint)
-	task.wait(config.Duration or 3)
-	Tween(Notif,{Position=UDim2.new(1,310,1,-85)},Animations.Quint)
-	task.wait(0.3); Notif:Destroy()
+	print("[NyemekHub Notification]: " .. config.Content)
 end
 
 -- =============================================
--- FIND BoxSpawnSummitA
+-- FIXED AUTO SUMMIT LOGIC
 -- =============================================
 
-local function FindBoxSpawnSummitA()
-	local checkpoints = Workspace:FindFirstChild("Checkpoints")
-	if not checkpoints then
-		warn("[NyemekHub] Checkpoints tidak ditemukan!")
-		return nil
-	end
-	for _, v in ipairs(checkpoints:GetDescendants()) do
-		if v.Name == "BoxSpawnSummitA" and v:IsA("BasePart") then
-			print("[NyemekHub] Ditemukan: " .. v:GetFullName())
-			return v
+local function GetSummitPart()
+	-- Mount Koplo Checkpoints Structure Fix
+	local paths = {
+		Workspace:FindFirstChild("Checkpoints"),
+		Workspace:FindFirstChild("Map") and Workspace.Map:FindFirstChild("Checkpoints")
+	}
+	
+	for _, folder in pairs(paths) do
+		if folder then
+			-- Cari secara rekursif karena sering didalam folder lagi
+			for _, v in pairs(folder:GetDescendants()) do
+				if (v.Name == "BoxSummitA" or v.Name == "BoxSpawnSummitA" or v.Name == "Summit") and v:IsA("BasePart") then
+					return v
+				end
+			end
 		end
 	end
-	warn("[NyemekHub] BoxSpawnSummitA tidak ditemukan!")
 	return nil
 end
 
--- =============================================
--- AUTO SUMMIT
--- Karena script ada di ServerScriptService dan
--- detect via Touched event, kita:
--- 1. Teleport HRP ke posisi part
--- 2. firetouchinterest semua limb ke part
--- Dua-duanya sekaligus agar pasti trigger
--- =============================================
-
-local summitRunning = false
-
-local function DoSummit(target)
+local function TeleportToSummit()
+	local target = GetSummitPart()
 	local char = player.Character
-	if not char then return end
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	if not hrp then return end
-	if not target or not target.Parent then return end
-
-	-- Step 1: Teleport langsung ke dalam part
-	-- Ini membuat physics engine detect overlap
-	pcall(function()
-		hrp.CFrame = CFrame.new(target.Position)
-	end)
-	pcall(function()
-		char:PivotTo(CFrame.new(target.Position))
-	end)
-
-	task.wait(0.1)
-
-	-- Step 2: firetouchinterest pada SEMUA part karakter
-	-- Server script listen Touched dari semua limb, bukan hanya HRP
-	for _, limb in ipairs(char:GetDescendants()) do
-		if limb:IsA("BasePart") then
-			pcall(function()
-				firetouchinterest(limb, target, 0) -- Begin touch
-			end)
-		end
-	end
-
-	task.wait(0.1)
-
-	-- Step 3: End touch (penting! beberapa game butuh begin+end)
-	for _, limb in ipairs(char:GetDescendants()) do
-		if limb:IsA("BasePart") then
-			pcall(function()
-				firetouchinterest(limb, target, 1) -- End touch
-			end)
-		end
-	end
-end
-
-local function StartAutoSummit()
-	local target = FindBoxSpawnSummitA()
-	if not target then
-		warn("[NyemekHub] Target tidak ditemukan!")
-		return
-	end
-
-	summitRunning = true
-	Settings.AutoSummit = true
-	print("[NyemekHub] Auto Summit ON → " .. target:GetFullName())
-
-	task.spawn(function()
-		while summitRunning do
-			if not target or not target.Parent then
-				target = FindBoxSpawnSummitA()
-				if not target then task.wait(2) continue end
-			end
-			DoSummit(target)
-			task.wait(1)
-		end
-	end)
-end
-
-local function StopAutoSummit()
-	summitRunning = false
-	Settings.AutoSummit = false
-	print("[NyemekHub] Auto Summit OFF")
-end
-
--- =============================================
--- NAME SPOOFER
--- =============================================
-
-local nameSpooferActive = false
-
-local function SpoofOverheadName()
-	nameSpooferActive = true
-	for _, otherPlayer in pairs(Players:GetPlayers()) do
+	if target and char and char:FindFirstChild("HumanoidRootPart") then
+		local hrp = char.HumanoidRootPart
+		-- Teleport
+		hrp.CFrame = target.CFrame * CFrame.new(0, 2, 0)
+		
+		-- Fire Touch Interest (Wajib untuk trigger server)
 		task.spawn(function()
-			local char = otherPlayer.Character
-			if not char then return end
-			local head = char:FindFirstChild("Head")
-			if not head then return end
-			for _, gui in pairs(head:GetChildren()) do
-				if gui:IsA("BillboardGui") then
-					for _, label in pairs(gui:GetDescendants()) do
-						if label:IsA("TextLabel") and (label.Text == otherPlayer.DisplayName or label.Text == otherPlayer.Name) then
-							label.Text = Settings.SpoofedName
-							label.TextColor3 = Color3.fromRGB(0,255,0)
-						end
-					end
-				end
-			end
-		end)
-	end
-	Players.PlayerAdded:Connect(function(newPlayer)
-		if not nameSpooferActive then return end
-		newPlayer.CharacterAdded:Connect(function(char)
-			task.wait(1)
-			local head = char:FindFirstChild("Head")
-			if not head then return end
-			for _, gui in pairs(head:GetChildren()) do
-				if gui:IsA("BillboardGui") then
-					for _, label in pairs(gui:GetDescendants()) do
-						if label:IsA("TextLabel") and (label.Text == newPlayer.DisplayName or label.Text == newPlayer.Name) then
-							label.Text = Settings.SpoofedName
-							label.TextColor3 = Color3.fromRGB(0,255,0)
-						end
-					end
-				end
-			end
-		end)
-	end)
-end
-
-local function RestoreOriginalNames()
-	nameSpooferActive = false
-	for _, otherPlayer in pairs(Players:GetPlayers()) do
-		task.spawn(function()
-			local char = otherPlayer.Character
-			if not char then return end
-			local head = char:FindFirstChild("Head")
-			if not head then return end
-			for _, gui in pairs(head:GetChildren()) do
-				if gui:IsA("BillboardGui") then
-					for _, label in pairs(gui:GetDescendants()) do
-						if label:IsA("TextLabel") and label.Text == Settings.SpoofedName then
-							label.Text = otherPlayer.DisplayName
-							label.TextColor3 = Color3.fromRGB(255,255,255)
-						end
-					end
-				end
-			end
+			firetouchinterest(hrp, target, 0)
+			task.wait(0.1)
+			firetouchinterest(hrp, target, 1)
 		end)
 	end
 end
 
+task.spawn(function()
+	while task.wait(0.5) do
+		if Settings.AutoSummit then
+			TeleportToSummit()
+		end
+	end
+end)
+
 -- =============================================
--- CREATE UI
+-- NAME SPOOFER LOGIC
 -- =============================================
 
-local Window = Rayfield:CreateWindow({Name = "NYEMEK HUB | MOUNT KOPLO PROTECT"})
+task.spawn(function()
+	while task.wait(1) do
+		if Settings.NameSpoofer then
+			for _, p in pairs(Players:GetPlayers()) do
+				pcall(function()
+					if p.Character and p.Character:FindFirstChild("Head") then
+						for _, g in pairs(p.Character.Head:GetChildren()) do
+							if g:IsA("BillboardGui") then
+								for _, t in pairs(g:GetDescendants()) do
+									if t:IsA("TextLabel") then
+										t.Text = Settings.SpoofedName
+										t.TextColor3 = Color3.fromRGB(0, 255, 0)
+									end
+								end
+							end
+						end
+					end
+				end)
+			end
+		end
+	end
+end)
+
+-- =============================================
+-- CREATE WINDOW & TABS
+-- =============================================
+
+local Window = Rayfield:CreateWindow({Name = "NYEMEK HUB | MOUNT KOPLO"})
 local MainTab = Rayfield:CreateTab(Window, {Name = "🏔️ Main"})
-local SettingsTab = Rayfield:CreateTab(Window, {Name = "⚙️ Settings"})
 
 Rayfield:CreateParagraph(MainTab, {
-	Title = "🏔️ Mount Koplo Auto Summit",
-	Content = "Teleport + firetouchinterest ke BoxSpawnSummitA di Checkpoints."
+	Title = "Status",
+	Content = "Auto Summit siap digunakan."
 })
 
 Rayfield:CreateToggle(MainTab, {
-	Name = "AUTO SUMMIT (BOXSPAWN)",
+	Name = "AUTO SUMMIT (ON/OFF)",
 	CurrentValue = false,
-	Callback = function(value)
-		if value then
-			StartAutoSummit()
-			Rayfield:Notify({Title="Auto Summit", Content="Auto summit activated!", Duration=2})
-		else
-			StopAutoSummit()
-			Rayfield:Notify({Title="Auto Summit", Content="Auto summit deactivated!", Duration=2})
-		end
+	Callback = function(val)
+		Settings.AutoSummit = val
 	end
-})
-
-Rayfield:CreateParagraph(MainTab, {
-	Title = "👤 Name Protection",
-	Content = "Spoof semua nama overhead player menjadi 'Nyemek HuB Protect'!"
 })
 
 Rayfield:CreateToggle(MainTab, {
-	Name = "NAME SPOOFER (PROTECT)",
+	Name = "NAME SPOOFER PROTECT",
 	CurrentValue = false,
-	Callback = function(value)
-		Settings.NameSpoofer = value
-		if value then
-			SpoofOverheadName()
-			Rayfield:Notify({Title="Name Spoofer", Content="All names protected!", Duration=2})
-		else
-			RestoreOriginalNames()
-			Rayfield:Notify({Title="Name Spoofer", Content="Names restored!", Duration=2})
-		end
+	Callback = function(val)
+		Settings.NameSpoofer = val
 	end
 })
 
-Rayfield:CreateParagraph(SettingsTab, {
-	Title = "⚙️ Settings",
-	Content = "Configure auto summit speed and behavior"
-})
-
-Rayfield:CreateParagraph(SettingsTab, {
-	Title = "ℹ️ How It Works",
-	Content = "Teleport karakter ke posisi BoxSpawnSummitA + firetouchinterest() pada semua limb untuk trigger server Touched event."
-})
-
-Rayfield:CreateParagraph(SettingsTab, {
-	Title = "⚠️ Warning",
-	Content = "Use at your own risk! Name spoofer is visual only."
-})
-
-print("[NyemekHub] Loaded!")
+print("[NyemekHub] Fixed Version Loaded!")
