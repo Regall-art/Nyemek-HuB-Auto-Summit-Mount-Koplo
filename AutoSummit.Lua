@@ -206,83 +206,80 @@ function Rayfield:Notify(config)
 end
 
 -- =============================================
--- TELEPORT FUNCTION - 3 METHOD SEKALIGUS
--- =============================================
-
-local function DoTeleport(targetPos)
-	local char = player.Character
-	if not char then return end
-
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	if not hrp then return end
-
-	local dest = CFrame.new(targetPos + Vector3.new(0, 5, 0))
-
-	-- Method 1: Set CFrame langsung
-	pcall(function()
-		hrp.CFrame = dest
-	end)
-
-	-- Method 2: Set Position via VectorForce (backup)
-	pcall(function()
-		hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-		hrp.CFrame = dest
-	end)
-
-	-- Method 3: PivotTo (Roblox modern API)
-	pcall(function()
-		char:PivotTo(dest)
-	end)
-end
-
--- =============================================
 -- FIND BoxSpawnSummitA
--- Workspace > Checkpoints > [angka] > BoxSpawnSummitA
 -- =============================================
-
-local cachedTarget = nil
 
 local function FindBoxSpawnSummitA()
-	-- Langsung cari dari Checkpoints folder
 	local checkpoints = Workspace:FindFirstChild("Checkpoints")
 	if not checkpoints then
-		warn("[NyemekHub] Folder Checkpoints tidak ada!")
+		warn("[NyemekHub] Checkpoints tidak ditemukan!")
 		return nil
 	end
-
-	-- GetDescendants mencakup semua level: 10, 11, 12, dst
 	for _, v in ipairs(checkpoints:GetDescendants()) do
 		if v.Name == "BoxSpawnSummitA" and v:IsA("BasePart") then
-			print("[NyemekHub] Target: " .. v:GetFullName() .. " Pos: " .. tostring(v.Position))
+			print("[NyemekHub] Ditemukan: " .. v:GetFullName())
 			return v
 		end
 	end
-
-	warn("[NyemekHub] BoxSpawnSummitA tidak ditemukan di Checkpoints!")
+	warn("[NyemekHub] BoxSpawnSummitA tidak ditemukan!")
 	return nil
 end
 
-local function GetTarget()
-	if cachedTarget and cachedTarget.Parent then
-		return cachedTarget
-	end
-	cachedTarget = FindBoxSpawnSummitA()
-	return cachedTarget
-end
-
 -- =============================================
--- AUTO SUMMIT LOOP
+-- AUTO SUMMIT
+-- Karena script ada di ServerScriptService dan
+-- detect via Touched event, kita:
+-- 1. Teleport HRP ke posisi part
+-- 2. firetouchinterest semua limb ke part
+-- Dua-duanya sekaligus agar pasti trigger
 -- =============================================
 
 local summitRunning = false
 
-local function StartAutoSummit()
-	-- Reset cache dulu agar scan ulang
-	cachedTarget = nil
+local function DoSummit(target)
+	local char = player.Character
+	if not char then return end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+	if not target or not target.Parent then return end
 
-	local target = GetTarget()
+	-- Step 1: Teleport langsung ke dalam part
+	-- Ini membuat physics engine detect overlap
+	pcall(function()
+		hrp.CFrame = CFrame.new(target.Position)
+	end)
+	pcall(function()
+		char:PivotTo(CFrame.new(target.Position))
+	end)
+
+	task.wait(0.1)
+
+	-- Step 2: firetouchinterest pada SEMUA part karakter
+	-- Server script listen Touched dari semua limb, bukan hanya HRP
+	for _, limb in ipairs(char:GetDescendants()) do
+		if limb:IsA("BasePart") then
+			pcall(function()
+				firetouchinterest(limb, target, 0) -- Begin touch
+			end)
+		end
+	end
+
+	task.wait(0.1)
+
+	-- Step 3: End touch (penting! beberapa game butuh begin+end)
+	for _, limb in ipairs(char:GetDescendants()) do
+		if limb:IsA("BasePart") then
+			pcall(function()
+				firetouchinterest(limb, target, 1) -- End touch
+			end)
+		end
+	end
+end
+
+local function StartAutoSummit()
+	local target = FindBoxSpawnSummitA()
 	if not target then
-		warn("[NyemekHub] Tidak bisa start, target tidak ditemukan!")
+		warn("[NyemekHub] Target tidak ditemukan!")
 		return
 	end
 
@@ -292,11 +289,12 @@ local function StartAutoSummit()
 
 	task.spawn(function()
 		while summitRunning do
-			local t = GetTarget()
-			if t and t.Parent then
-				DoTeleport(t.Position)
+			if not target or not target.Parent then
+				target = FindBoxSpawnSummitA()
+				if not target then task.wait(2) continue end
 			end
-			task.wait(0.5)
+			DoSummit(target)
+			task.wait(1)
 		end
 	end)
 end
@@ -385,7 +383,7 @@ local SettingsTab = Rayfield:CreateTab(Window, {Name = "⚙️ Settings"})
 
 Rayfield:CreateParagraph(MainTab, {
 	Title = "🏔️ Mount Koplo Auto Summit",
-	Content = "Teleport otomatis ke BoxSpawnSummitA di Checkpoints."
+	Content = "Teleport + firetouchinterest ke BoxSpawnSummitA di Checkpoints."
 })
 
 Rayfield:CreateToggle(MainTab, {
@@ -429,12 +427,12 @@ Rayfield:CreateParagraph(SettingsTab, {
 
 Rayfield:CreateParagraph(SettingsTab, {
 	Title = "ℹ️ How It Works",
-	Content = "Cari BoxSpawnSummitA di Workspace > Checkpoints (semua sub-folder). Teleport pakai 3 method sekaligus: CFrame, Velocity reset, dan PivotTo."
+	Content = "Teleport karakter ke posisi BoxSpawnSummitA + firetouchinterest() pada semua limb untuk trigger server Touched event."
 })
 
 Rayfield:CreateParagraph(SettingsTab, {
 	Title = "⚠️ Warning",
-	Content = "Use at your own risk! Auto summit may be detected by anti-cheat. Name spoofer is visual only."
+	Content = "Use at your own risk! Name spoofer is visual only."
 })
 
 print("[NyemekHub] Loaded!")
