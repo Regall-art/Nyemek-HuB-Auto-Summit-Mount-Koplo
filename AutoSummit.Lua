@@ -78,9 +78,7 @@ local function CreateNYLogo(parent)
 	return LogoBg
 end
 
--- =============================================
--- UI LIBRARY
--- =============================================
+-- UI Library
 local Rayfield = {}
 
 function Rayfield:CreateWindow(config)
@@ -208,34 +206,61 @@ function Rayfield:Notify(config)
 end
 
 -- =============================================
--- AUTO SUMMIT - CORE LOGIC
--- Struktur: Workspace > Checkpoints > 12 > BoxSpawnSummitA
--- Cari BoxSpawnSummitA langsung pakai GetDescendants dari folder Checkpoints
+-- TELEPORT FUNCTION - 3 METHOD SEKALIGUS
 -- =============================================
 
+local function DoTeleport(targetPos)
+	local char = player.Character
+	if not char then return end
+
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+
+	local dest = CFrame.new(targetPos + Vector3.new(0, 5, 0))
+
+	-- Method 1: Set CFrame langsung
+	pcall(function()
+		hrp.CFrame = dest
+	end)
+
+	-- Method 2: Set Position via VectorForce (backup)
+	pcall(function()
+		hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+		hrp.CFrame = dest
+	end)
+
+	-- Method 3: PivotTo (Roblox modern API)
+	pcall(function()
+		char:PivotTo(dest)
+	end)
+end
+
+-- =============================================
+-- FIND BoxSpawnSummitA
+-- Workspace > Checkpoints > [angka] > BoxSpawnSummitA
+-- =============================================
+
+local cachedTarget = nil
+
 local function FindBoxSpawnSummitA()
-	-- Cari folder Checkpoints di Workspace langsung
-	local checkpointsFolder = Workspace:FindFirstChild("Checkpoints")
-	if not checkpointsFolder then
-		warn("[NyemekHub] Folder 'Checkpoints' tidak ditemukan di Workspace!")
+	-- Langsung cari dari Checkpoints folder
+	local checkpoints = Workspace:FindFirstChild("Checkpoints")
+	if not checkpoints then
+		warn("[NyemekHub] Folder Checkpoints tidak ada!")
 		return nil
 	end
 
-	-- Cari BoxSpawnSummitA di DALAM Checkpoints (termasuk sub-folder seperti 10, 11, 12)
-	-- GetDescendants() masuk ke semua level: Checkpoints > 12 > BoxSpawnSummitA
-	for _, obj in ipairs(checkpointsFolder:GetDescendants()) do
-		if obj.Name == "BoxSpawnSummitA" and obj:IsA("BasePart") then
-			print("[NyemekHub] BoxSpawnSummitA ditemukan: " .. obj:GetFullName())
-			return obj
+	-- GetDescendants mencakup semua level: 10, 11, 12, dst
+	for _, v in ipairs(checkpoints:GetDescendants()) do
+		if v.Name == "BoxSpawnSummitA" and v:IsA("BasePart") then
+			print("[NyemekHub] Target: " .. v:GetFullName() .. " Pos: " .. tostring(v.Position))
+			return v
 		end
 	end
 
-	warn("[NyemekHub] 'BoxSpawnSummitA' tidak ditemukan di dalam Checkpoints!")
+	warn("[NyemekHub] BoxSpawnSummitA tidak ditemukan di Checkpoints!")
 	return nil
 end
-
--- Cache supaya tidak scan ulang tiap frame
-local cachedTarget = nil
 
 local function GetTarget()
 	if cachedTarget and cachedTarget.Parent then
@@ -245,36 +270,31 @@ local function GetTarget()
 	return cachedTarget
 end
 
+-- =============================================
+-- AUTO SUMMIT LOOP
+-- =============================================
+
 local summitRunning = false
 
 local function StartAutoSummit()
-	summitRunning = true
-	Settings.AutoSummit = true
+	-- Reset cache dulu agar scan ulang
+	cachedTarget = nil
 
-	-- Cari target dulu
 	local target = GetTarget()
 	if not target then
-		warn("[NyemekHub] Gagal start - BoxSpawnSummitA tidak ditemukan!")
-		summitRunning = false
-		Settings.AutoSummit = false
+		warn("[NyemekHub] Tidak bisa start, target tidak ditemukan!")
 		return
 	end
 
-	print("[NyemekHub] Auto Summit ON → Target: " .. target:GetFullName())
+	summitRunning = true
+	Settings.AutoSummit = true
+	print("[NyemekHub] Auto Summit ON → " .. target:GetFullName())
 
 	task.spawn(function()
 		while summitRunning do
-			local char = player.Character
-			if char then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				local hum = char:FindFirstChildOfClass("Humanoid")
-				if hrp and hum and hum.Health > 0 then
-					local t = GetTarget()
-					if t and t.Parent then
-						-- Teleport langsung ke atas BoxSpawnSummitA
-						hrp.CFrame = CFrame.new(t.Position + Vector3.new(0, 5, 0))
-					end
-				end
+			local t = GetTarget()
+			if t and t.Parent then
+				DoTeleport(t.Position)
 			end
 			task.wait(0.5)
 		end
@@ -365,7 +385,7 @@ local SettingsTab = Rayfield:CreateTab(Window, {Name = "⚙️ Settings"})
 
 Rayfield:CreateParagraph(MainTab, {
 	Title = "🏔️ Mount Koplo Auto Summit",
-	Content = "Teleport otomatis ke BoxSpawnSummitA di Checkpoints > 12."
+	Content = "Teleport otomatis ke BoxSpawnSummitA di Checkpoints."
 })
 
 Rayfield:CreateToggle(MainTab, {
@@ -409,7 +429,7 @@ Rayfield:CreateParagraph(SettingsTab, {
 
 Rayfield:CreateParagraph(SettingsTab, {
 	Title = "ℹ️ How It Works",
-	Content = "Script cari folder 'Checkpoints' di Workspace, lalu GetDescendants() untuk temukan 'BoxSpawnSummitA' di dalam sub-folder manapun (10, 11, 12, dst), lalu teleport ke sana."
+	Content = "Cari BoxSpawnSummitA di Workspace > Checkpoints (semua sub-folder). Teleport pakai 3 method sekaligus: CFrame, Velocity reset, dan PivotTo."
 })
 
 Rayfield:CreateParagraph(SettingsTab, {
@@ -417,4 +437,4 @@ Rayfield:CreateParagraph(SettingsTab, {
 	Content = "Use at your own risk! Auto summit may be detected by anti-cheat. Name spoofer is visual only."
 })
 
-print("[NyemekHub] Loaded! Mencari BoxSpawnSummitA di Checkpoints...")
+print("[NyemekHub] Loaded!")
